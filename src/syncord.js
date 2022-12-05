@@ -5,7 +5,7 @@ let baseapi = "https://discord.com/api"
 
 let ws = new WebSocket("wss://gateway.discord.gg/");
 
-class syncord {
+class SynCord {
     constructor(intents=null, token=null, game=null, status="online") {
         this.intents = intents;
         this.token = token;
@@ -136,7 +136,7 @@ class syncord {
             "name": name,
             "description": description
         }
-        fetch(`${baseapi}/v8/applications/${user_id}/commands`, {
+        fetch(`${baseapi}/v10/applications/${user_id}/commands`, {
             method: "POST",
             headers: headers,
             body: JSON.stringify(body)
@@ -149,5 +149,4 @@ class syncord {
 
  }
 
-
-export default syncord;
+export default SynCord;

@@ -1,24 +1,30 @@
-import syncord from "./src/syncord.js";
+import SynCord from "./src/syncord.js";
+import fs from "fs";
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const bot = new syncord({ intents: 513, token: process.env.TOKEN, game: "It works", status: "dnd" });
+const bot = new SynCord({ intents: 513, token: process.env.TOKEN, game: "It works", status: "dnd" });
 
 bot.on("READY", (data) => {
     console.log(`Logged in as ${data.user.username}#${data.user.discriminator}`);
 });
 
-bot.on("MESSAGE_CREATE", (data) => {
-    let prefix = "!";
-    if(data.author.bot) return;
-    if(data.content.startsWith(prefix)) {
-        let args = data.content.slice(prefix.length).trim().split(/ +/g);
-        let command = args.shift().toLowerCase();
-
-        if(command === "ping") {
-            bot.send_message(data.channel_id, "Pong!");
-        }
+fs.readdir("./commands", (err, files) => {
+    if (err) console.log(err);
+    let jsfiles = files.filter(f => f.split(".").pop() === "js");
+    if (jsfiles.length <= 0) {
+        console.log("No commands to load!");
+        return;
     }
+    console.log(`Loading a total of ${jsfiles.length} commands.`);
+    jsfiles.forEach((f, i) => {
+        let props = import(`./commands/${f}`);
+        console.log(`${i + 1}: ${f} loaded!`);
+    });
+});
+
+bot.on("MESSAGE_CREATE", (data) => {
+    //read files in commands folder and register them as commands
 });
 
 // interactions event
