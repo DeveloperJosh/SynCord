@@ -10,7 +10,15 @@ bot.on("READY", (data) => {
 });
 
 bot.on("MESSAGE_CREATE", (data) => {
-    //read files in commands folder and register them as commands
+    if(data.author.bot) return;
+    let prefix = "!";
+    if(data.content.startsWith(prefix)) {
+        let args = data.content.slice(prefix.length).split(" ");
+        let command = args.shift().toLowerCase();
+        if(command === "ping") {
+            bot.send_message(data.channel_id, "Pong!");
+        }
+    }
 });
 
 // interactions event
