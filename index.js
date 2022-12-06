@@ -1,31 +1,40 @@
 import SynCord from "./src/syncord.js";
-import fs from "fs";
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const bot = new SynCord({ intents: 513, token: process.env.TOKEN, game: "It works", status: "dnd" });
+const bot = new SynCord({ intents: 513, game: "SynCord", status: "dnd" });
 
-bot.on("READY", (data) => {
-    console.log(`Logged in as ${data.user.username}#${data.user.discriminator}`);
+bot.event("READY", (data) => {
+    console.log(`Logged in as ${data.user.username}`);
+    ///bot.register_guild(data.user.id, 951303456650580058n, "ping", "ping command");
 });
 
-bot.on("MESSAGE_CREATE", (data) => {
-    if(data.author.bot) return;
-    let prefix = "!";
-    if(data.content.startsWith(prefix)) {
-        let args = data.content.slice(prefix.length).split(" ");
-        let command = args.shift().toLowerCase();
-        if(command === "ping") {
-            bot.send_message(data.channel_id, "Pong!");
+bot.event("MESSAGE_CREATE", (message) => {
+    if (message.author.bot) return;
+    if (message.content == "ping") {
+        bot.send_embed(message.channel_id, [
+            {
+                "title": "Embed Title", 
+                "description": "Embed Description",
+                "color": 0x00ff00
+            }
+        ]);
+    }
+});
+
+bot.event("INTERACTION_CREATE", (interaction) => {
+    if (interaction.type == 2) {
+        if (interaction.data.name == "ping") {
+            bot.interaction_response_embed(interaction.id, interaction.token, [
+                {
+                    "title": "Embed Title",
+                    "description": "Embed Description",
+                    "color": 0x00ff00
+                }
+            ],
+            false);
         }
     }
 });
 
-// interactions event
-bot.on("INTERACTION_CREATE", (data) => {
-    if (data.data.name == "status") {
-        bot.send_interaction_response(data.id, data.token, "Online", false);
-    }
-});
-
-bot.start();
+bot.start(process.env.TOKEN);

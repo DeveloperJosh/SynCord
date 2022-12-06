@@ -2,17 +2,20 @@
   "name": "syncord",
   "version": "1.0.0",
   "description": "Discord framework",
-  "main": "index.js",
+  "main": "/src/syncord.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "DeveloperJosh",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.0.3",
     "node-fetch": "^3.3.0",
     "websocket": "^1.0.34",
     "ws": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.3"
   }
 }
