@@ -11,30 +11,53 @@ bot.event("READY", (data) => {
 
 bot.event("MESSAGE_CREATE", (message) => {
     if (message.author.bot) return;
-    if (message.content == "ping") {
-        bot.send_embed(message.channel_id, [
-            {
-                "title": "Embed Title", 
-                "description": "Embed Description",
-                "color": 0x00ff00
-            }
-        ]);
-    }
-});
-
-bot.event("INTERACTION_CREATE", (interaction) => {
-    if (interaction.type == 2) {
-        if (interaction.data.name == "ping") {
-            bot.interaction_response_embed(interaction.id, interaction.token, [
-                {
-                    "title": "Embed Title",
-                    "description": "Embed Description",
-                    "color": 0x00ff00
-                }
-            ],
-            false);
+    let args = message.content.split(" ");
+    let command = args.shift();
+    let prefix = "!";
+    if (command.startsWith(prefix)) {
+        command = command.slice(prefix.length);
+        if (command === "ping") {
+            bot.send(message.channel_id, "Pong!");
         }
-    }
-});
+        // make channel
+        if (command === "makechannel") {
+            let name = args[0];
+            channel=  bot.create_channel(message.guild_id, name, 0);
+
+            bot.send(message.channel_id, `Created channel ${name}`);
+        }
+        // delete channel
+        if (command === "deletechannel") {
+            let name = args[0];
+            channel=  bot.delete_channel(message.guild_id, name);
+
+            bot.send(message.channel_id, `Deleted channel ${name}`);
+        }
+        if (command === "help") {
+            let embed = {
+                title: "Help",
+                description: "This is a help embed",
+                color: 0x00ff00,
+                fields: [
+                    {
+                        name: "ping",
+                        value: "Pong!"
+                    },
+                    {
+                        name: "makechannel",
+                        value: "Makes a channel"
+                    },
+                    {
+                        name: "deletechannel",
+                        value: "Deletes a channel"
+                    },
+                ]
+            }
+            bot.send_embed(message.channel_id, [
+                embed
+            ]);
+        }
+     }
+ });
 
 bot.start(process.env.TOKEN);

@@ -255,5 +255,72 @@ export class Gateway {
             });
         }
     }
+    create_channel(guild_id, name, type=0, topic=null, bitrate=null, user_limit=null, rate_limit_per_user=null, position=null, permission_overwrites=null, parent_id=null, nsfw=null) {
+        let headers = {
+            "Authorization": `Bot ${this.token}`,
+            "Content-Type": "application/json"
+        }
+        let body = {
+            "name": name,
+            "type": type,
+            "topic": topic,
+            "bitrate": bitrate,
+            "user_limit": user_limit,
+            "rate_limit_per_user": rate_limit_per_user,
+            "position": position,
+            "permission_overwrites": permission_overwrites,
+            "parent_id": parent_id,
+            "nsfw": nsfw
+        }
+        fetch(`${baseapi}/v10/guilds/${guild_id}/channels`, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(body)
+        });
+    }
 
+    delete_channel(guild_id, channel_id) {
+        let headers = {
+            "Authorization": `Bot ${this.token}`,
+            "Content-Type": "application/json"
+        }
+        fetch(`${baseapi}/v10/guilds/${guild_id}/channels/${channel_id}`, {
+            method: "DELETE",
+            headers: headers
+        });
+    }
+
+    edit_channel(guild_id, channel_id, name, type=0, topic=null, bitrate=null, user_limit=null, rate_limit_per_user=null, position=null, permission_overwrites=null, parent_id=null, nsfw=null) {
+        let headers = {
+            "Authorization": `Bot ${this.token}`,
+            "Content-Type": "application/json"
+        }
+        let body = {
+            "name": name,
+            "type": type,
+            "topic": topic,
+            "bitrate": bitrate,
+            "user_limit": user_limit,
+            "rate_limit_per_user": rate_limit_per_user,
+            "position": position,
+            "permission_overwrites": permission_overwrites,
+            "parent_id": parent_id,
+            "nsfw": nsfw
+        }
+        fetch(`${baseapi}/v10/guilds/${guild_id}/channels/${channel_id}`, {
+            method: "PATCH",
+            headers: headers,
+            body: JSON.stringify(body)
+        });
+    }
+    get_channel(guild_id, channel_id) {
+        let headers = {
+            "Authorization": `Bot ${this.token}`,
+            "Content-Type": "application/json"
+        }
+        fetch(`${baseapi}/v10/guilds/${guild_id}/channels/${channel_id}`, {
+            method: "GET",
+            headers: headers
+        });
+    }
 }

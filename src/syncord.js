@@ -33,4 +33,19 @@ export default class SynCord {
     interaction_response_embed(id, token, embed, ephemeral) {
         this.gateway.interaction_response_embed(id, token, embed, ephemeral);
     }
+    create_channel(guild_id, name, type, topic=null, bitrate=null, user_limit=null, rate_limit_per_user=null, position=null, permission_overwrites=null, parent_id=null, nsfw=null) {
+        this.gateway.create_channel(guild_id, name, type, topic, bitrate, user_limit, rate_limit_per_user, position, permission_overwrites, parent_id, nsfw);
+    }
+    delete_channel(guild_id, channel_id) {
+        this.gateway.delete_channel(guild_id, channel_id);
+    }
+    edit_channel(guild_id, channel_id, name, type, topic, position, nsfw, rate_limit_per_user, bitrate, user_limit, permission_overwrites, parent_id) {
+        this.gateway.edit_channel(guild_id, channel_id, name, type, topic, position, nsfw, rate_limit_per_user, bitrate, user_limit, permission_overwrites, parent_id);
+    }
+    get_channel(guild_id, channel_id) {
+        this.gateway.get_channel(guild_id, channel_id);
+    }
+    on(event, callback) {
+        this.gateway.on(event, callback);
+    }
 }
