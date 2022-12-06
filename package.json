@@ -1,6 +1,6 @@
 {
   "name": "syncord",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Discord framework",
   "main": "/src/syncord.js",
   "type": "module",

@@ -47,4 +47,5 @@ bot.event("INTERACTION_CREATE", (interaction) => {
     }
 });
 
-bot.start(process.env.TOKEN);```
+bot.start(process.env.TOKEN);
+```
