@@ -8,44 +8,38 @@ SynCord Will be just like most framework's but you will learn more about the dis
 ## Exp
 
 ```js
-import SynCord from "./src/syncord.js";
-import * as dotenv from 'dotenv'
-dotenv.config()
+import { SyncordClient } from "./src/index.js";
+import { GatewayIntentBits as Intents } from "./src/utils/GatewayIntentBits.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-const bot = new SynCord({ intents: 513, game: "SynCord", status: "dnd" });
-
-bot.event("READY", (data) => {
-    console.log(`Logged in as ${data.user.username}`);
-    ///bot.register_guild(data.user.id, 951303456650580058n, "ping", "ping command");
+const client = new SyncordClient({
+  intents: [
+    Intents.GUILDS,
+    Intents.GUILD_MESSAGES,
+    Intents.GUILD_MESSAGE_REACTIONS,
+    Intents.MESSAGE_CONTENT,
+  ],
+  commandPath: "./commands",
+  debug: true, 
 });
 
-bot.event("MESSAGE_CREATE", (message) => {
-    if (message.author.bot) return;
-    if (message.content == "ping") {
-        bot.send_embed(message.channel_id, [
-            {
-                "title": "Embed Title", 
-                "description": "Embed Description",
-                "color": 0x00ff00
-            }
-        ]);
-    }
+client.on("READY", (data) => {
+  console.log(`Logged in as ${data.user.username} (${data.user.id})`);
+  data.user.setActivity("Sailor Song by Gigi Perez", { type: "LISTENING" });
 });
 
-bot.event("INTERACTION_CREATE", (interaction) => {
-    if (interaction.type == 2) {
-        if (interaction.data.name == "ping") {
-            bot.interaction_response_embed(interaction.id, interaction.token, [
-                {
-                    "title": "Embed Title",
-                    "description": "Embed Description",
-                    "color": 0x00ff00
-                }
-            ],
-            false);
-        }
-    }
+client.on("MESSAGE_CREATE", (msg) => {
+  console.log(`[MSG] ${msg.author.username}: ${msg.content}`);
 });
 
-bot.start(process.env.TOKEN);
+client.on("INTERACTION_CREATE", (interaction) => {
+  console.log(
+    `[INT] ${interaction.data?.name || interaction.data?.custom_id || "unknown"}`
+  );
+});
+
+await client.loadCommands();
+await client.login(process.env.TOKEN);
+await client.registerAllCommands(process.env.APP_ID);
 ```
