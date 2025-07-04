@@ -7,19 +7,54 @@ export class Gateway {
     constructor(options, token) {
         this.options = options;
         this.token = token;
-        this.debug = options.debug ?? false; 
+        this.debug = options.debug ?? false;
         this.ws = null;
         this.heartbeatInterval = null;
         this.sequence = null;
         this.sessionId = null;
         this.listeners = {};
         this.reconnectDelay = 5000;
+        this.sendQueue = [];
+        this.isProcessingQueue = false;
     }
 
     log(...args) {
         if (this.debug) {
             console.log("  [Gateway]", ...args);
         }
+    }
+
+    /**
+     * Queues a payload to be sent to the WebSocket, respecting rate limits.
+     * @param {object} payload - The payload to send.
+     */
+    send(payload) {
+        this.sendQueue.push(payload);
+        if (!this.isProcessingQueue) {
+            this.processSendQueue();
+        }
+    }
+
+    /**
+     * Processes one item from the send queue and schedules the next.
+     */
+    processSendQueue() {
+        if (this.sendQueue.length === 0) {
+            this.isProcessingQueue = false;
+            return;
+        }
+
+        this.isProcessingQueue = true;
+        const payload = this.sendQueue.shift();
+
+        if (this.ws?.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(payload));
+        }
+
+        // Discord has a strict 1-per-5-seconds limit for IDENTIFY
+        const delay = payload.op === 2 ? 5100 : 550;
+
+        setTimeout(() => this.processSendQueue(), delay);
     }
 
     connect() {
@@ -37,6 +72,8 @@ export class Gateway {
         this.ws.on("close", (code) => {
             this.log(`❌ WebSocket closed (${code}). Reconnecting...`);
             clearInterval(this.heartbeatInterval);
+            this.sendQueue = [];
+            this.isProcessingQueue = false;
             setTimeout(() => this.connect(), this.reconnectDelay);
         });
 
@@ -46,7 +83,8 @@ export class Gateway {
     }
 
     identify() {
-        const payload = {
+        this.log("📨 Queueing IDENTIFY");
+        this.send({
             op: 2,
             d: {
                 token: this.token,
@@ -57,26 +95,22 @@ export class Gateway {
                     $device: "Syncord Bot - Node.js",
                 },
             },
-        };
-        this.ws.send(JSON.stringify(payload));
-        this.log("📨 Sent IDENTIFY");
+        });
     }
 
     resume() {
         if (!this.sessionId) {
             return this.identify();
         }
-
-        const payload = {
+        this.log("📨 Queueing RESUME");
+        this.send({
             op: 6,
             d: {
                 token: this.token,
                 session_id: this.sessionId,
                 seq: this.sequence,
             },
-        };
-        this.ws.send(JSON.stringify(payload));
-        this.log("📨 Sent RESUME");
+        });
     }
 
     handlePayload(payload) {
@@ -110,30 +144,25 @@ export class Gateway {
                 break;
         }
     }
-    /**
-     * Starts the heartbeat interval.
-     * @param {number} interval - The heartbeat interval in milliseconds.
-     */
+
     startHeartbeat(interval) {
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-
         this.heartbeatInterval = setInterval(() => {
-            this.ws.send(
-                JSON.stringify({
+            if (this.ws?.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({
                     op: 1,
                     d: this.sequence,
-                })
-            );
+                }));
+            }
         }, interval);
     }
 
     sendPresenceUpdate(data) {
-        this.ws.send(
-            JSON.stringify({
-                op: 3,
-                d: data,
-            })
-        );
+        this.log("📨 Queueing presence update");
+        this.send({
+            op: 3,
+            d: data,
+        });
     }
 
     on(event, callback) {

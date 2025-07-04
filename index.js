@@ -12,6 +12,7 @@ const client = new SyncordClient({
   ],
   commandPath: "./commands",
   debug: true, 
+  applicationId: process.env.APP_ID,
 });
 
 client.on("READY", (data) => {
@@ -19,16 +20,6 @@ client.on("READY", (data) => {
   data.user.setActivity("Sailor Song by Gigi Perez", { type: "LISTENING" });
 });
 
-client.on("MESSAGE_CREATE", (msg) => {
-  console.log(`[MSG] ${msg.author.username}: ${msg.content}`);
-});
-
-client.on("INTERACTION_CREATE", (interaction) => {
-  console.log(
-    `[INT] ${interaction.data?.name || interaction.data?.custom_id || "unknown"}`
-  );
-});
-
 await client.loadCommands();
 await client.login(process.env.TOKEN);
-await client.registerAllCommands(process.env.APP_ID);
+await client.registerAllCommands();

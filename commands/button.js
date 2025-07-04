@@ -7,16 +7,15 @@ export default {
         .setName("button")
         .setDescription("Sends a clickable button")
         .toJSON(),
-
-    async execute({ reply }) {
+    async execute(interaction) {
         const button = new ButtonBuilder()
             .setLabel("Click me!")
-            .setStyle(1) // Primary style
+            .setStyle(1) 
             .setCustomId("btn_click");
 
         const row = new ActionRowBuilder().addButton(button);
 
-        await reply({
+        await interaction.reply({
             content: "Here’s your button 👇",
             components: [row.toJSON()],
         });
@@ -30,10 +29,9 @@ export default {
 
             try {
                 await interaction.deferUpdate();
-
                 await interaction.editReply({
                     content: "You clicked the button! 🎉",
-                    components: [], 
+                    components: [],
                 });
             } catch (err) {
                 console.error("Error handling button interaction:", err);
