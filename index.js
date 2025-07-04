@@ -1,63 +1,34 @@
-import SynCord from "./src/syncord.js";
-import * as dotenv from 'dotenv'
-dotenv.config()
+import { SyncordClient } from "./src/index.js";
+import { GatewayIntentBits as Intents } from "./src/utils/GatewayIntentBits.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-const bot = new SynCord({ intents: 513, game: "SynCord", status: "dnd" });
-
-bot.event("READY", (data) => {
-    console.log(`Logged in as ${data.user.username}`);
-    ///bot.register_guild(data.user.id, 951303456650580058n, "ping", "ping command");
+const client = new SyncordClient({
+  intents: [
+    Intents.GUILDS,
+    Intents.GUILD_MESSAGES,
+    Intents.GUILD_MESSAGE_REACTIONS,
+    Intents.MESSAGE_CONTENT,
+  ],
+  commandPath: "./commands",
+  debug: true, 
 });
 
-bot.event("MESSAGE_CREATE", (message) => {
-    if (message.author.bot) return;
-    let args = message.content.split(" ");
-    let command = args.shift();
-    let prefix = "!";
-    if (command.startsWith(prefix)) {
-        command = command.slice(prefix.length);
-        if (command === "ping") {
-            bot.send(message.channel_id, "Pong!");
-        }
-        // make channel
-        if (command === "makechannel") {
-            let name = args[0];
-            channel=  bot.create_channel(message.guild_id, name, 0);
+client.on("READY", (data) => {
+  console.log(`Logged in as ${data.user.username} (${data.user.id})`);
+  data.user.setActivity("Sailor Song by Gigi Perez", { type: "LISTENING" });
+});
 
-            bot.send(message.channel_id, `Created channel ${name}`);
-        }
-        // delete channel
-        if (command === "deletechannel") {
-            let name = args[0];
-            channel=  bot.delete_channel(message.guild_id, name);
+client.on("MESSAGE_CREATE", (msg) => {
+  console.log(`[MSG] ${msg.author.username}: ${msg.content}`);
+});
 
-            bot.send(message.channel_id, `Deleted channel ${name}`);
-        }
-        if (command === "help") {
-            let embed = {
-                title: "Help",
-                description: "This is a help embed",
-                color: 0x00ff00,
-                fields: [
-                    {
-                        name: "ping",
-                        value: "Pong!"
-                    },
-                    {
-                        name: "makechannel",
-                        value: "Makes a channel"
-                    },
-                    {
-                        name: "deletechannel",
-                        value: "Deletes a channel"
-                    },
-                ]
-            }
-            bot.send_embed(message.channel_id, [
-                embed
-            ]);
-        }
-     }
- });
+client.on("INTERACTION_CREATE", (interaction) => {
+  console.log(
+    `[INT] ${interaction.data?.name || interaction.data?.custom_id || "unknown"}`
+  );
+});
 
-bot.start(process.env.TOKEN);
+await client.loadCommands();
+await client.login(process.env.TOKEN);
+await client.registerAllCommands(process.env.APP_ID);
