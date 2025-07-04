@@ -11,7 +11,7 @@ const client = new SyncordClient({
     Intents.MESSAGE_CONTENT,
   ],
   commandPath: "./commands",
-  debug: true, 
+  debug: false, 
   applicationId: process.env.APP_ID,
 });
 

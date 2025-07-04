@@ -20,7 +20,7 @@ export class Gateway {
 
     log(...args) {
         if (this.debug) {
-            console.log("  [Gateway]", ...args);
+            console.log("[Gateway]", ...args);
         }
     }
 
