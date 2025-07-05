@@ -1,6 +1,6 @@
 import { Gateway } from "./core/gateway.js";
 import { API } from "./core/API.js";
-import { registerEventListeners } from "./core/eventHandler.js";
+import { registerEventListeners } from "./utils/eventHandler.js";
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
