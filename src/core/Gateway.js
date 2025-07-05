@@ -123,7 +123,7 @@ export class Gateway {
                 this.identify();
                 break;
             case 11: // Heartbeat ACK
-                this.log("✅ Heartbeat ACK received.");
+                //this.log("✅ Heartbeat ACK received.");
                 break;
             case 0: // DISPATCH
                 if (payload.t === "READY") {

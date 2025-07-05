@@ -11,13 +11,13 @@ const client = new SyncordClient({
     Intents.MESSAGE_CONTENT,
   ],
   commandPath: "./commands",
-  debug: false, 
+  debug: true, 
   applicationId: process.env.APP_ID,
 });
 
 client.on("READY", (data) => {
   console.log(`Logged in as ${data.user.username} (${data.user.id})`);
-  data.user.setActivity("Sailor Song by Gigi Perez", { type: "LISTENING" });
+  data.user.setActivity("Overwatch", { type: "COMPETING" });
 });
 
 await client.loadCommands();
