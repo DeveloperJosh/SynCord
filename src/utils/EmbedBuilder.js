@@ -71,6 +71,17 @@ export class EmbedBuilder {
     return this;
   }
 
+  addFields(...fields) {
+    for (const field of fields) {
+      if (typeof field === "object" && field.name && field.value) {
+        this.embed.fields.push(field);
+      } else if (Array.isArray(field)) {
+        this.embed.fields.push(...field);
+      }
+    }
+    return this;
+  }
+
   toJSON() {
     const cleanEmbed = {};
     for (const [k, v] of Object.entries(this.embed)) {

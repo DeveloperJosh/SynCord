@@ -16,7 +16,15 @@ export default {
 
         const helpEmbed = new EmbedBuilder()
             .setTitle('Help - Command List')
-            .setDescription(commandList)
+            //.setDescription(commandList)
+            // make a field for each command
+            .addFields(
+                ...Array.from(commands.values()).map(cmd => ({
+                    name: `/${cmd.data.name}`,
+                    value: cmd.data.description || 'No description available',
+                    inline: false
+                }))
+            )
             .setColor(0x5865F2)
             .setFooter(`Found ${commands.size} commands.`)
             .setTimestamp();

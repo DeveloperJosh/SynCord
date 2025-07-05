@@ -119,6 +119,19 @@ export class API {
         return res.json();
     }
     
+    async getUser(userId) {
+        const url = `${baseApi}/users/${userId}`;
+        const res = await fetch(url, { headers: this.getHeaders() });
+        if (!res.ok) {
+            const text = await res.text();
+            if (res.status === 404) {
+                throw new Error(`User not found: ${userId}`);
+            }
+            throw new Error(`Failed to get user: ${res.status} ${text}`);
+        }
+        return res.json();
+    }
+
     async createMessage(channelId, payload) {
         const url = `${baseApi}/channels/${channelId}/messages`;
         const res = await fetch(url, {

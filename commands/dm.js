@@ -1,8 +1,5 @@
 import { SlashCommandBuilder } from "../src/utils/SlashCommandBuilder.js";
-
-const PERMISSIONS = {
-    BanMembers: 1n << 2n, 
-};
+import { PermissionFlags, Permissions } from "../src/utils/Permissions.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -19,14 +16,14 @@ export default {
         .toJSON(),
 
     async execute(interaction) {
-        const userPermissions = BigInt(interaction.member.permissions);
-        if (!(userPermissions & PERMISSIONS.BanMembers)) {
+        const memberPermissions = new Permissions(interaction.member.permissions);
+
+        if (!memberPermissions.has(PermissionFlags.BanMembers)) {
             return interaction.reply({
                 content: '❌ You do not have permission to use this command.',
-                ephemeral: true,
+                ephemeral: true
             });
         }
-
         const options = interaction.data.options;
         const targetOption = options.find(opt => opt.name === 'target');
         const messageOption = options.find(opt => opt.name === 'message');
