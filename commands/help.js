@@ -16,8 +16,6 @@ export default {
 
         const helpEmbed = new EmbedBuilder()
             .setTitle('Help - Command List')
-            //.setDescription(commandList)
-            // make a field for each command
             .addFields(
                 ...Array.from(commands.values()).map(cmd => ({
                     name: `/${cmd.data.name}`,

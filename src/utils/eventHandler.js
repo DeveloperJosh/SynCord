@@ -1,3 +1,5 @@
+import { Permissions } from "./Permissions.js";
+
 function handleInteractionCreate(client, interaction) {
     const interactionWrapper = {
         ...interaction,
@@ -8,7 +10,7 @@ function handleInteractionCreate(client, interaction) {
     };
 
     switch (interaction.type) {
-        case 2: {
+        case 2: { // Application Command
             const command = client.commands.get(interaction.data.name);
             if (!command) return;
 
@@ -21,6 +23,18 @@ function handleInteractionCreate(client, interaction) {
             };
             interactionWrapper.deferReply = (ephemeral) => client.api.deferReply(interaction.id, interaction.token, ephemeral);
 
+            if (command.data.default_member_permissions) {
+                const memberPermissions = new Permissions(interaction.member.permissions);
+                const requiredPermissions = new Permissions(command.data.default_member_permissions);
+
+                if (!memberPermissions.has(BigInt(requiredPermissions.bits))) {
+                    return interactionWrapper.reply({
+                        content: '❌ You do not have the required permissions to use this command.',
+                        ephemeral: true
+                    });
+                }
+            }
+
             try {
                 command.execute(interactionWrapper);
             } catch (err) {
@@ -30,7 +44,7 @@ function handleInteractionCreate(client, interaction) {
             break;
         }
         
-        case 3: {
+        case 3: { // Component Interaction
             interactionWrapper.update = (response) => client.api.updateMessage(interaction.id, interaction.token, response);
             interactionWrapper.deferUpdate = () => client.api.deferUpdate(interaction.id, interaction.token);
             interactionWrapper.reply = (response) => client.api.reply(interaction.id, interaction.token, response);
@@ -62,7 +76,6 @@ export function registerEventListeners(client) {
                 });
             },
         };
-        client.log(`Logged in as ${client.user.tag}`);
         client.emit("READY", client);
     });
 

@@ -72,8 +72,6 @@ export class Gateway {
         this.ws.on("close", (code) => {
             this.log(`❌ WebSocket closed (${code}). Reconnecting...`);
             clearInterval(this.heartbeatInterval);
-            this.sendQueue = [];
-            this.isProcessingQueue = false;
             setTimeout(() => this.connect(), this.reconnectDelay);
         });
 
@@ -100,6 +98,7 @@ export class Gateway {
 
     resume() {
         if (!this.sessionId) {
+            this.log("No session ID to resume with. Identifying instead.");
             return this.identify();
         }
         this.log("📨 Queueing RESUME");
@@ -114,46 +113,61 @@ export class Gateway {
     }
 
     handlePayload(payload) {
-        if (payload.s !== null) this.sequence = payload.s;
+        if (payload.s !== null && payload.s !== undefined) {
+            this.sequence = payload.s;
+        }
 
         switch (payload.op) {
             case 10: // HELLO
                 this.log("👋 Received HELLO. Starting heartbeat.");
                 this.startHeartbeat(payload.d.heartbeat_interval);
-                this.identify();
+                if (this.sessionId) {
+                    this.resume();
+                } else {
+                    this.identify();
+                }
                 break;
+
             case 11: // Heartbeat ACK
-                //this.log("✅ Heartbeat ACK received.");
+                // this.log("✅ Heartbeat ACK received.");
                 break;
+
             case 0: // DISPATCH
                 if (payload.t === "READY") {
                     this.sessionId = payload.d.session_id;
+                    this.log(`✅ READY! Session ID: ${this.sessionId}`);
                 }
                 if (payload.t) {
                     this.log(`🔔 Dispatch event: ${payload.t}`);
                     this.emit(payload.t, payload.d);
                 }
                 break;
+
             case 7: // RECONNECT
-                this.log("🔄 Gateway requested reconnect.");
+                this.log("🔄 Gateway requested reconnect. Closing connection to resume.");
                 this.ws.close(4000);
                 break;
+
             case 9: // INVALID SESSION
-                this.log("⚠️ Invalid session. Re-identifying.");
-                setTimeout(() => this.identify(), 1000);
+                this.log(`⚠️ Invalid session. Resumable: ${payload.d}`);
+                if (payload.d) {
+                    this.ws.close(4000);
+                } else {
+                    this.sessionId = null;
+                    this.sequence = null;
+                    setTimeout(() => this.identify(), 1000 + Math.random() * 4000);
+                }
                 break;
         }
     }
 
     startHeartbeat(interval) {
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        setTimeout(() => {
+            this.send({ op: 1, d: this.sequence });
+        }, interval * Math.random());
         this.heartbeatInterval = setInterval(() => {
-            if (this.ws?.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({
-                    op: 1,
-                    d: this.sequence,
-                }));
-            }
+            this.send({ op: 1, d: this.sequence });
         }, interval);
     }
 

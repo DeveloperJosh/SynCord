@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "../src/utils/SlashCommandBuilder.js";
-import { PermissionFlags, Permissions } from "../src/utils/Permissions.js";
+import { PermissionFlags } from "../src/utils/Permissions.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -13,17 +13,10 @@ export default {
             option.setName('message')
                 .setDescription('Message to send')
                 .setRequired(true))
+        .setDefaultMemberPermissions(String(PermissionFlags.BanMembers))
         .toJSON(),
 
     async execute(interaction) {
-        const memberPermissions = new Permissions(interaction.member.permissions);
-
-        if (!memberPermissions.has(PermissionFlags.BanMembers)) {
-            return interaction.reply({
-                content: '❌ You do not have permission to use this command.',
-                ephemeral: true
-            });
-        }
         const options = interaction.data.options;
         const targetOption = options.find(opt => opt.name === 'target');
         const messageOption = options.find(opt => opt.name === 'message');
@@ -42,7 +35,8 @@ export default {
 
         try {
             const dmContent = `You have received a message from the staff of **${interaction.guild.name}**:\n\n> ${message}`;
-            await interaction.api.createDmMessage(targetId, dmContent);
+            
+            await interaction.client.api.createDmMessage(targetId, dmContent);
 
             return interaction.reply({
                 content: `✅ Successfully sent a DM to ${targetUser.username}.`,
@@ -51,7 +45,7 @@ export default {
         } catch (error) {
             console.error('Error sending DM:', error);
             return interaction.reply({
-                content: '❌ Failed to send DM. The user may have DMs disabled.',
+                content: '❌ Failed to send DM. The user may have DMs disabled or an error occurred.',
                 ephemeral: true
             });
         }

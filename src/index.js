@@ -15,6 +15,8 @@ export const ActivityType = {
     COMPETING: 5,
 };
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 export class SyncordClient extends EventEmitter {
     constructor(options = {}) {
         super();
@@ -86,6 +88,8 @@ export class SyncordClient extends EventEmitter {
             } catch (err) {
                 console.error(`❌ Failed to register command ${command.data.name}:`, err);
             }
+            
+            await delay(2000);
         }
         this.log("Finished registering all commands.");
         return true;
