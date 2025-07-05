@@ -64,9 +64,6 @@ export function registerEventListeners(client) {
     gateway.on("READY", (data) => {
         client.user = {
             ...data.user,
-            get tag() {
-                return `${this.username}#${this.discriminator}`;
-            },
             setActivity: (name, { type = "WATCHING" } = {}) => {
                 client.gateway.sendPresenceUpdate({
                     activities: [{ name, type: client.ActivityType[type] ?? 3 }],

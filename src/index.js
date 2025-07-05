@@ -89,7 +89,7 @@ export class SyncordClient extends EventEmitter {
                 console.error(`❌ Failed to register command ${command.data.name}:`, err);
             }
             
-            await delay(2000);
+            await delay(1000);
         }
         this.log("Finished registering all commands.");
         return true;

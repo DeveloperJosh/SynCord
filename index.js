@@ -17,9 +17,11 @@ const client = new SyncordClient({
 
 client.on("READY", (data) => {
   console.log(`Logged in as ${data.user.username} (${data.user.id})`);
+  console.log(`Logged in as ${data.tag}`);
+  
   data.user.setActivity("Overwatch", { type: "COMPETING" });
 });
 
 await client.loadCommands();
 await client.login(process.env.TOKEN);
-await client.registerAllCommands();
+//await client.registerAllCommands();
