@@ -216,6 +216,10 @@ export class API {
         return res.json();
     }
 
+    /**
+     * Registers a single command. Use for testing or one-off registrations.
+     * For production, bulkRegisterGlobalCommands is preferred.
+     */
     async registerGlobalCommand(appId, name, description, options = []) {
         const url = `${baseApi}/applications/${appId}/commands`;
         const body = { name, description, options };
@@ -229,6 +233,30 @@ export class API {
         if (!res.ok) {
             const text = await res.text();
             throw new Error(`Failed to register command ${name}: ${res.status} ${text}`);
+        }
+        return res.json();
+    }
+
+    /**
+     * NEW METHOD: Overwrites all existing global commands with the provided list.
+     * This is the recommended way to register commands.
+     * @param {string} appId - The application (client) ID.
+     * @param {Array<object>} commands - An array of command data objects.
+     */
+    async bulkRegisterGlobalCommands(appId, commands) {
+        const url = `${baseApi}/applications/${appId}/commands`;
+        
+        const res = await fetch(url, {
+            method: "PUT", // Use PUT for a bulk overwrite
+            headers: this.getHeaders(),
+            body: JSON.stringify(commands),
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            // Discord often provides detailed error messages in the body
+            console.error("Discord API Error Body:", text);
+            throw new Error(`Failed to bulk register commands: ${res.status} ${res.statusText}`);
         }
         return res.json();
     }

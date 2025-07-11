@@ -1,12 +1,36 @@
 import { Permissions } from "./Permissions.js";
 
+/**
+ * A standalone helper function to construct a Discord avatar URL.
+ * @param {object} user - The user object from Discord.
+ * @param {object} [member] - The member object from Discord (optional, for checking guild-specific avatars).
+ * @param {string} [guildId] - The ID of the guild (required if checking for a member avatar).
+ * @returns {string} The full URL of the user's avatar.
+ */
+function getDisplayAvatarURL(user, member, guildId) {
+    if (!user) return null;
+
+    if (member && member.avatar && guildId) {
+        return `https://cdn.discordapp.com/guilds/${guildId}/users/${user.id}/avatars/${member.avatar}.png?size=1024`;
+    }
+    if (user.avatar) {
+        return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=1024`;
+    }
+    return `https://cdn.discordapp.com/embed/avatars/${parseInt(user.discriminator) % 5}.png`;
+}
+
 function handleInteractionCreate(client, interaction) {
+    const user = interaction.member ? interaction.member.user : interaction.user;
+
     const interactionWrapper = {
         ...interaction,
         client: client,
         api: client.api,
         guild: client.guilds.get(interaction.guild_id),
+        user: user,
+        member: interaction.member,
         editReply: (response) => client.api.editReply(client.options.applicationId, interaction.token, response),
+        getDisplayAvatarURL: (u, m) => getDisplayAvatarURL(u, m, interaction.guild_id),
     };
 
     switch (interaction.type) {
@@ -23,7 +47,7 @@ function handleInteractionCreate(client, interaction) {
             };
             interactionWrapper.deferReply = (ephemeral) => client.api.deferReply(interaction.id, interaction.token, ephemeral);
 
-            if (command.data.default_member_permissions) {
+            if (command.data.default_member_permissions && interaction.member) {
                 const memberPermissions = new Permissions(interaction.member.permissions);
                 const requiredPermissions = new Permissions(command.data.default_member_permissions);
 
@@ -34,12 +58,12 @@ function handleInteractionCreate(client, interaction) {
                     });
                 }
             }
-
             try {
                 command.execute(interactionWrapper);
             } catch (err) {
                 console.error("Error executing command:", err);
-                interactionWrapper.editReply({ content: "❌ An error occurred while executing the command.", components: [] }).catch(console.error);
+                const replyFunction = interactionWrapper.editReply || interactionWrapper.reply;
+                replyFunction({ content: "❌ An error occurred while executing the command.", components: [] }).catch(console.error);
             }
             break;
         }
@@ -62,18 +86,45 @@ export function registerEventListeners(client) {
     const { gateway } = client;
 
     gateway.on("READY", (data) => {
-        client.user = {
+        const clientUser = {
             ...data.user,
-            setActivity: (name, { type = "WATCHING" } = {}) => {
+            /**
+             * Sets the bot's presence and activity.
+             * @param {string} name - The name of the activity (e.g., "Overwatch 2").
+             * @param {object} [options] - Additional options for the presence.
+             * @param {string|number} [options.type="PLAYING"] - The type of activity. Can be "PLAYING", "STREAMING", etc., or the corresponding number (0, 1, etc.).
+             */
+            setActivity: (name, { type = "PLAYING" } = {}) => {
+                let activityCode;
+
+                if (typeof type === 'string' && client.ActivityType.hasOwnProperty(type)) {
+                    activityCode = client.ActivityType[type];
+                } 
+                else if (typeof type === 'number' && Object.values(client.ActivityType).includes(type)) {
+                    activityCode = type;
+                }
+
+                if (activityCode === undefined) {
+                    console.warn(`[Client] Invalid activity type "${type}". Defaulting to "PLAYING".`);
+                    activityCode = 0; // ActivityType.PLAYING
+                }
+                
                 client.gateway.sendPresenceUpdate({
-                    activities: [{ name, type: client.ActivityType[type] ?? 3 }],
+                    activities: [{ name, type: activityCode }],
                     status: "online",
                     since: 0,
                     afk: false,
                 });
             },
         };
-        client.emit("READY", client);
+
+        const clientData = {
+            ...client,
+            user: clientUser,
+        };
+
+        client.user = clientUser;
+        client.emit("READY", clientData);
     });
 
     gateway.on("GUILD_CREATE", (guild) => {

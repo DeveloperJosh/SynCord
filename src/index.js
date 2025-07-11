@@ -15,8 +15,6 @@ export const ActivityType = {
     COMPETING: 5,
 };
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
 export class SyncordClient extends EventEmitter {
     constructor(options = {}) {
         super();
@@ -46,16 +44,28 @@ export class SyncordClient extends EventEmitter {
             console.log("[Client]", ...args);
         }
     }
-
-    async login(token) {
+    /**
+     * This is useful for scripts that only need to make API calls, like command registration.
+     * @param {string} token - The bot's authentication token.
+     */
+    initAPI(token) {
         this.token = token;
-        this.gateway = new Gateway({ intents: this.intents, debug: this.debug }, token);
         this.api = new API(token, this.options);
-
+    }
+    /**
+     * Connects the bot to the Discord Gateway to begin receiving events.
+     * @param {string} token - The bot's authentication token.
+     */
+    async login(token) {
+        this.initAPI(token);
+        this.gateway = new Gateway({ intents: this.intents, debug: this.debug }, token);
         this.gateway.connect();
         registerEventListeners(this);
     }
-
+    /**
+     * Loads command files from the specified directory into the client's command map.
+     * @param {string} [folderPath=this.commandPath] - The path to the commands folder.
+     */
     async loadCommands(folderPath = this.commandPath) {
         const absolutePath = path.resolve(folderPath);
         const files = fs.readdirSync(absolutePath).filter((f) => f.endsWith(".js"));
@@ -73,25 +83,26 @@ export class SyncordClient extends EventEmitter {
             }
         }
     }
-
+    /**
+     * Registers all loaded commands with Discord.
+     * This should be run from a separate script, not on every bot startup.
+     */
     async registerAllCommands() {
-        this.log("Starting to register all commands globally...");
-        for (const command of this.commands.values()) {
-            try {
-                await this.api.registerGlobalCommand(
-                    this.options.applicationId,
-                    command.data.name,
-                    command.data.description,
-                    command.data.options ?? []
-                );
-                this.log(`✅ Successfully registered command: ${command.data.name}`);
-            } catch (err) {
-                console.error(`❌ Failed to register command ${command.data.name}:`, err);
-            }
-            
-            await delay(1000);
+        if (!this.api) {
+            throw new Error("API not initialized. Call client.initAPI(token) before registering commands.");
         }
-        this.log("Finished registering all commands.");
+        this.log("Starting to register all commands globally...");
+        const commandData = Array.from(this.commands.values());
+
+        try {
+             await this.api.bulkRegisterGlobalCommands(
+                 this.options.applicationId,
+                 commandData.map(cmd => cmd.data) 
+             );
+             this.log(`✅ Successfully registered ${commandData.length} commands.`);
+        } catch (err) {
+             console.error(`❌ Failed to register commands in bulk:`, err);
+        }
         return true;
     }
 }
