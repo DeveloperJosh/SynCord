@@ -13,7 +13,7 @@ const main = async () => {
                 Intents.MESSAGE_CONTENT,
             ],
             commandPath: "./commands",
-            debug: false, 
+            debug: true, 
             applicationId: process.env.APP_ID,
         });
 

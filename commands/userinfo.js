@@ -33,7 +33,9 @@ export default {
             };
 
             const createdAt = getCreatedAt(targetUser.id);
-            const avatarURL = interaction.getDisplayAvatarURL(targetUser, targetMember);
+            
+            const avatarURL = interaction.getDisplayAvatarURL(targetUser, targetMember, { dynamic: true });
+
             const userInfoEmbed = new EmbedBuilder()
                 .setTitle(`${targetUser.username}'s Information`)
                 .setThumbnail(avatarURL)
@@ -44,20 +46,27 @@ export default {
                     { name: 'Created At', value: `<t:${Math.floor(createdAt.getTime() / 1000)}:F>`, inline: false }
                 )
                 .setColor(0x5865F2)
-                .setFooter(`Requested by ${interaction.user.username}`, interaction.getDisplayAvatarURL(interaction.user, interaction.member))
-                .setTimestamp();
-            
+                .setFooter(`Requested by ${interaction.user.username}`, interaction.getDisplayAvatarURL(interaction.user, interaction.member, { dynamic: true }))
+                .setTimestamp()
+                .toJSON();
+                
             await interaction.reply({
-                embeds: [userInfoEmbed.toJSON()],
+                embeds: [userInfoEmbed],
                 ephemeral: true
             });
 
         } catch (err) {
             console.error("Error executing userinfo command:", err);
-            if (interaction.replied || interaction.deferred) {
-                await interaction.editReply({ content: '❌ An error occurred.', embeds: [], components: [] });
+            if (interaction.replied) {
+                await interaction.editReply({
+                    content: '❌ An error occurred while fetching user information.',
+                    ephemeral: true
+                });
             } else {
-                await interaction.reply({ content: '❌ An error occurred.', ephemeral: true });
+                await interaction.reply({
+                    content: '❌ An error occurred while fetching user information.',
+                    ephemeral: true
+                });
             }
         }
     }

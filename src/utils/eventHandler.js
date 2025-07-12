@@ -3,20 +3,44 @@ import { Permissions } from "./Permissions.js";
 /**
  * A standalone helper function to construct a Discord avatar URL.
  * @param {object} user - The user object from Discord.
- * @param {object} [member] - The member object from Discord (optional, for checking guild-specific avatars).
- * @param {string} [guildId] - The ID of the guild (required if checking for a member avatar).
+ * @param {object} [member] - The member object from Discord.
+ * @param {string} [guildId] - The ID of the guild.
+ * @param {object} [options] - Options for the avatar URL.
+ * @param {string} [options.format='png'] - The format of the image (png, jpg, webp, gif).
+ * @param {number} [options.size=1024] - The size of the image (any power of 2 from 16 to 4096).
+ * @param {boolean} [options.dynamic=false] - If true, will use GIF for animated avatars.
  * @returns {string} The full URL of the user's avatar.
  */
-function getDisplayAvatarURL(user, member, guildId) {
-    if (!user) return null;
+function getDisplayAvatarURL(user, member, guildId, { format = 'png', size = 1024, dynamic = false } = {}) {
+    if (!user) {
+        return `https://cdn.discordapp.com/embed/avatars/0.png`;
+    }
+    let avatarHash = user.avatar;
+    let isGuildAvatar = false;
 
-    if (member && member.avatar && guildId) {
-        return `https://cdn.discordapp.com/guilds/${guildId}/users/${user.id}/avatars/${member.avatar}.png?size=1024`;
+    if (member && member.avatar) {
+        avatarHash = member.avatar;
+        isGuildAvatar = true;
     }
-    if (user.avatar) {
-        return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=1024`;
+    
+    let imageFormat = format;
+    if (dynamic && avatarHash && avatarHash.startsWith('a_')) {
+        imageFormat = 'gif';
     }
-    return `https://cdn.discordapp.com/embed/avatars/${parseInt(user.discriminator) % 5}.png`;
+
+    if (avatarHash) {
+        if (isGuildAvatar) {
+            if (guildId) {
+                return `https://cdn.discordapp.com/guilds/${guildId}/users/${user.id}/avatars/${avatarHash}.${imageFormat}?size=${size}`;
+            }
+            // Fallback to user avatar if guildId is not provided
+            return `https://cdn.discordapp.com/avatars/${user.id}/${avatarHash}.${imageFormat}?size=${size}`;
+        }
+        return `https://cdn.discordapp.com/avatars/${user.id}/${avatarHash}.${imageFormat}?size=${size}`;
+    }
+
+    const discriminator = user.discriminator || '0';
+    return `https://cdn.discordapp.com/embed/avatars/${parseInt(discriminator) % 5}.png`;
 }
 
 function handleInteractionCreate(client, interaction) {
@@ -30,7 +54,7 @@ function handleInteractionCreate(client, interaction) {
         user: user,
         member: interaction.member,
         editReply: (response) => client.api.editReply(client.options.applicationId, interaction.token, response),
-        getDisplayAvatarURL: (u, m) => getDisplayAvatarURL(u, m, interaction.guild_id),
+        getDisplayAvatarURL: (u, m, options) => getDisplayAvatarURL(u, m, interaction.guild_id, options),
     };
 
     switch (interaction.type) {
